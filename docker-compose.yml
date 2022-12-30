@@ -1,0 +1,44 @@
+version: '3.7'
+services:
+  php:
+    image: bscheshir/php:7.4.3-fpm-alpine-4yii2
+    restart: always
+    volumes:
+      - ./php-data:/var/www/html #php-data
+      - ~/.composer/cache:/root/.composer/cache
+    depends_on:
+      - db
+    environment:
+      TZ: "${TZ:-Europe/Moscow}"
+      XDEBUG_CONFIG: "remote_enable=Off remote_autostart=Off"
+  nginx:
+    image: nginx:1.17.8-alpine
+    restart: always
+    expose:
+      - "8080"
+      - "8081"
+#    ports: # use nginx-proxy in same network (see ./docs/nginx-proxy.md)
+#      - "8080:8080"
+#      - "8081:8081"
+    depends_on:
+      - php
+    volumes:
+      - ./php-data:/var/www/html #php-data
+      - ./nginx-conf:/etc/nginx/conf.d #nginx-conf
+      - ./nginx-logs:/var/log/nginx #nginx-logs
+    environment:
+      TZ: "${TZ:-Europe/Moscow}"
+  db:
+    image: mysql:8.0.19
+    entrypoint:
+      - '/entrypoint.sh'
+      - '--default-authentication-plugin=mysql_native_password' # https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_default_authentication_plugin
+    restart: always
+    volumes:
+      - ./mysql-data/db:/var/lib/mysql #mysql-data
+    environment:
+      TZ: "${TZ:-Europe/Moscow}"
+      MYSQL_ROOT_PASSWORD: yii2advanced
+      MYSQL_DATABASE: yii2advanced
+      MYSQL_USER: yii2advanced
+      MYSQL_PASSWORD: yii2advanced
